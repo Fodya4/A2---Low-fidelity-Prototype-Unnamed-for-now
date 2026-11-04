@@ -1,33 +1,98 @@
-import { useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
 import { useBodyPose } from "./hooks/useBodyPose";
+import { useMovementDetector } from "./hooks/useMovementDetector";
+import { useSequenceGame } from "./hooks/useSequenceGame";
 import PoseOverlay from "./components/camera/PoseOverlay";
-import { getMainPose } from "./logic/poseUtils";
-import { MOVEMENTS, evaluateMovements } from "./logic/movements";
+import { MOVEMENTS } from "./logic/movements";
+import { TOTAL_ROUNDS } from "./logic/sequenceGame";
 
-// Reads the latest pose 10 times per second and evaluates every movement rule.
-// 10x/second is plenty for a readable display and keeps re-renders low.
-function useMovementResults(posesRef) {
-  const [results, setResults] = useState(() => evaluateMovements(null));
+const LABELS = Object.fromEntries(
+  MOVEMENTS.map((movement) => [movement.id, movement.label])
+);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const pose = getMainPose(posesRef.current);
-      setResults(evaluateMovements(pose));
-    }, 100);
-    return () => clearInterval(intervalId);
-  }, [posesRef]);
+// One row per movement in the round.
+// During perform, remaining movements are hidden (that's the memory part); finished ones stay checked.
+function SequenceSlots({ sequence, progress, phase, passed }) {
+  return (
+    <ol style={{ fontSize: "1.25rem", lineHeight: 2 }}>
+      {sequence.map((id, index) => {
+        let icon = "⬜";
+        if (index < progress) icon = "✅";
+        else if (phase === "feedback" && !passed && index === progress)
+          icon = "❌";
 
-  return results;
+        const revealed =
+          phase === "show" || phase === "feedback" || index < progress;
+        return (
+          <li key={index}>
+            {phase === "show" ? "" : `${icon} `}
+            {revealed ? LABELS[id] : "???"}
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
-function resultIcon(value) {
-  if (value === null) return "—"; // can't tell: shoulders not in frame
-  return value ? "✅" : "⬜";
+function GamePanel({ game, detector, ready }) {
+  const { phase, round, sequence, progress, passed, history } = game.state;
+
+  if (phase === "idle") {
+    return (
+      <button type="button" onClick={game.start} disabled={!ready}>
+        {ready ? "Start game" : "Waiting for camera and model…"}
+      </button>
+    );
+  }
+
+  if (phase === "finished") {
+    return (
+      <div>
+        <h2>Game complete</h2>
+        <ul>
+          {history.map((entry) => (
+            <li key={entry.round}>
+              Round {entry.round}: {entry.length} movements:{" "}
+              {entry.passed ? "passed" : "failed"}
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={game.reset}>
+          Reset
+        </button>
+      </div>
+    );
+  }
+
+  let message = "";
+  if (phase === "show") message = "Memorise this sequence";
+  if (phase === "perform") {
+    if (!detector.inFrame) message = "Step into frame";
+    else if (detector.waitingForNeutral) message = "Lower your arms";
+    else message = "Do the next movement";
+  }
+  if (phase === "feedback")
+    message = passed ? "Well done, correct sequence" : "Incorrect";
+
+  return (
+    <div>
+      <h2>
+        Round {round} of {TOTAL_ROUNDS}
+      </h2>
+      <p style={{ fontSize: "1.5rem" }}>
+        <strong>{message}</strong>
+      </p>
+      <SequenceSlots
+        sequence={sequence}
+        progress={progress}
+        phase={phase}
+        passed={passed}
+      />
+    </div>
+  );
 }
 
-// Temporary test component: live movement detection.
-function MovementCheck() {
+function App() {
   const { videoRef, status: cameraStatus, error: cameraError } = useCamera();
   const {
     posesRef,
@@ -35,14 +100,15 @@ function MovementCheck() {
     status: poseStatus,
     error: poseError,
   } = useBodyPose(videoRef, { enabled: cameraStatus === "ready" });
-  const results = useMovementResults(posesRef);
+  const game = useSequenceGame();
+  const detector = useMovementDetector(posesRef, {
+    enabled: game.state.phase === "perform",
+    onMovement: game.reportMovement,
+  });
 
   return (
-    <div>
-      <p>
-        Camera: <strong>{cameraStatus}</strong> · Pose model:{" "}
-        <strong>{poseStatus}</strong>
-      </p>
+    <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
+      <h1>A2 Prototype: sequence game</h1>
       {cameraError && <p style={{ color: "crimson" }}>{cameraError}</p>}
       {poseError && <p style={{ color: "crimson" }}>{poseError}</p>}
 
@@ -74,30 +140,12 @@ function MovementCheck() {
           />
         </div>
 
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            fontSize: "1.25rem",
-            lineHeight: 2,
-          }}
-        >
-          {MOVEMENTS.map((movement) => (
-            <li key={movement.id}>
-              {resultIcon(results[movement.id])} {movement.label}
-            </li>
-          ))}
-        </ul>
+        <GamePanel
+          game={game}
+          detector={detector}
+          ready={poseStatus === "detecting"}
+        />
       </div>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>A2 Prototype: movement check</h1>
-      <MovementCheck />
     </main>
   );
 }
