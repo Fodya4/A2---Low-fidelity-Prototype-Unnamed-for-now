@@ -1,18 +1,41 @@
-// Temporary foundation check: confirms ml5 is available inside React.
-// This file gets replaced once we start the webcam milestone.
+import { useState } from "react";
+import { useCamera } from "./hooks/useCamera";
+
+// Temporary test component for the camera hook.
+function CameraCheck() {
+  const { videoRef, status, error } = useCamera();
+
+  return (
+    <div>
+      <p>
+        Camera status: <strong>{status}</strong>
+      </p>
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        style={{
+          width: 640,
+          maxWidth: "100%",
+          transform: "scaleX(-1)",
+          background: "#111",
+        }}
+      />
+    </div>
+  );
+}
+
 function App() {
-  const ml5Loaded = typeof window.ml5 !== "undefined";
+  const [cameraOn, setCameraOn] = useState(true);
 
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>A2 Prototype: foundation check</h1>
-      <p>ml5.js: {ml5Loaded ? "✅ loaded" : "❌ not found"}</p>
-      {ml5Loaded && (
-        <p>
-          bodyPose available:{" "}
-          {typeof window.ml5.bodyPose === "function" ? "✅" : "❌"}
-        </p>
-      )}
+      <h1>A2 Prototype: camera check</h1>
+      <button type="button" onClick={() => setCameraOn((on) => !on)}>
+        {cameraOn ? "Unmount camera" : "Mount camera"}
+      </button>
+      {cameraOn && <CameraCheck />}
     </main>
   );
 }
