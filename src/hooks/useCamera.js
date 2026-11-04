@@ -58,6 +58,13 @@ export function useCamera({ width = 640, height = 480 } = {}) {
 
         video.srcObject = stream;
         await video.play();
+
+        // TensorFlow.js (used by ml5) reads the video's width/height ATTRIBUTES,
+        // not its real resolution. Without this, the model sees a 0x0 image.
+        // CSS still controls how big the video looks on screen.
+        video.width = video.videoWidth;
+        video.height = video.videoHeight;
+
         if (!cancelled) setStatus("ready");
       } catch (err) {
         if (cancelled) return;
