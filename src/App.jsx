@@ -1,10 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCamera } from "./hooks/useCamera";
 import { useBodyPose } from "./hooks/useBodyPose";
 import PoseOverlay from "./components/camera/PoseOverlay";
+import { getMainPose } from "./logic/poseUtils";
+import { MOVEMENTS, evaluateMovements } from "./logic/movements";
 
-// Temporary test component: camera + BodyPose + landmark overlay.
-function PoseCheck() {
+// Reads the latest pose 10 times per second and evaluates every movement rule.
+// 10x/second is plenty for a readable display and keeps re-renders low.
+function useMovementResults(posesRef) {
+  const [results, setResults] = useState(() => evaluateMovements(null));
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const pose = getMainPose(posesRef.current);
+      setResults(evaluateMovements(pose));
+    }, 100);
+    return () => clearInterval(intervalId);
+  }, [posesRef]);
+
+  return results;
+}
+
+function resultIcon(value) {
+  if (value === null) return "—"; // can't tell: shoulders not in frame
+  return value ? "✅" : "⬜";
+}
+
+// Temporary test component: live movement detection.
+function MovementCheck() {
   const { videoRef, status: cameraStatus, error: cameraError } = useCamera();
   const {
     posesRef,
@@ -12,10 +35,7 @@ function PoseCheck() {
     status: poseStatus,
     error: poseError,
   } = useBodyPose(videoRef, { enabled: cameraStatus === "ready" });
-
-  function logPoses() {
-    console.log("Current poses:", posesRef.current);
-  }
+  const results = useMovementResults(posesRef);
 
   return (
     <div>
@@ -26,51 +46,58 @@ function PoseCheck() {
       {cameraError && <p style={{ color: "crimson" }}>{cameraError}</p>}
       {poseError && <p style={{ color: "crimson" }}>{poseError}</p>}
 
-      <button type="button" onClick={logPoses}>
-        Log current poses to console
-      </button>
-
-      {/* Wrapper is position: relative so the canvas can sit exactly on top of the video. */}
       <div
         style={{
-          position: "relative",
-          width: 640,
-          maxWidth: "100%",
-          marginTop: "1rem",
+          display: "flex",
+          gap: "2rem",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
         }}
       >
-        <video
-          ref={videoRef}
-          playsInline
-          muted
+        <div style={{ position: "relative", width: 640, maxWidth: "100%" }}>
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            style={{
+              display: "block",
+              width: "100%",
+              height: "auto",
+              transform: "scaleX(-1)",
+              background: "#111",
+            }}
+          />
+          <PoseOverlay
+            videoRef={videoRef}
+            posesRef={posesRef}
+            connections={connections}
+          />
+        </div>
+
+        <ul
           style={{
-            display: "block",
-            width: "100%",
-            height: "auto", // the height attribute is now set for ml5; CSS keeps proportions
-            transform: "scaleX(-1)",
-            background: "#111",
+            listStyle: "none",
+            padding: 0,
+            fontSize: "1.25rem",
+            lineHeight: 2,
           }}
-        />
-        <PoseOverlay
-          videoRef={videoRef}
-          posesRef={posesRef}
-          connections={connections}
-        />
+        >
+          {MOVEMENTS.map((movement) => (
+            <li key={movement.id}>
+              {resultIcon(results[movement.id])} {movement.label}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
 
 function App() {
-  const [on, setOn] = useState(true);
-
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>A2 Prototype: pose check</h1>
-      <button type="button" onClick={() => setOn((value) => !value)}>
-        {on ? "Unmount" : "Mount"}
-      </button>
-      {on && <PoseCheck />}
+      <h1>A2 Prototype: movement check</h1>
+      <MovementCheck />
     </main>
   );
 }
