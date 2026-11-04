@@ -1,151 +1,61 @@
-import { useCamera } from "./hooks/useCamera";
-import { useBodyPose } from "./hooks/useBodyPose";
-import { useMovementDetector } from "./hooks/useMovementDetector";
-import { useSequenceGame } from "./hooks/useSequenceGame";
-import PoseOverlay from "./components/camera/PoseOverlay";
-import { MOVEMENTS } from "./logic/movements";
-import { TOTAL_ROUNDS } from "./logic/sequenceGame";
+import { useState } from "react";
+import TermsOfService from "./components/screens/TermsOfService";
+import MovementGame from "./components/screens/MovementGame";
+import PortraitReveal from "./components/screens/PortraitReveal";
+import PortraitBoard from "./components/screens/PortraitBoard";
+import FinalChoice from "./components/screens/FinalChoice";
+import Debrief from "./components/screens/Debrief";
 
-const LABELS = Object.fromEntries(
-  MOVEMENTS.map((movement) => [movement.id, movement.label])
-);
+const MAX_BOARD_PORTRAITS = 30;
 
-// One row per movement in the round.
-// During perform, remaining movements are hidden (that's the memory part); finished ones stay checked.
-function SequenceSlots({ sequence, progress, phase, passed }) {
-  return (
-    <ol style={{ fontSize: "1.25rem", lineHeight: 2 }}>
-      {sequence.map((id, index) => {
-        let icon = "⬜";
-        if (index < progress) icon = "✅";
-        else if (phase === "feedback" && !passed && index === progress)
-          icon = "❌";
-
-        const revealed =
-          phase === "show" || phase === "feedback" || index < progress;
-        return (
-          <li key={index}>
-            {phase === "show" ? "" : `${icon} `}
-            {revealed ? LABELS[id] : "???"}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function GamePanel({ game, detector, ready }) {
-  const { phase, round, sequence, progress, passed, history } = game.state;
-
-  if (phase === "idle") {
-    return (
-      <button type="button" onClick={game.start} disabled={!ready}>
-        {ready ? "Start game" : "Waiting for camera and model…"}
-      </button>
-    );
-  }
-
-  if (phase === "finished") {
-    return (
-      <div>
-        <h2>Game complete</h2>
-        <ul>
-          {history.map((entry) => (
-            <li key={entry.round}>
-              Round {entry.round}: {entry.length} movements:{" "}
-              {entry.passed ? "passed" : "failed"}
-            </li>
-          ))}
-        </ul>
-        <button type="button" onClick={game.reset}>
-          Reset
-        </button>
-      </div>
-    );
-  }
-
-  let message = "";
-  if (phase === "show") message = "Memorise this sequence";
-  if (phase === "perform") {
-    if (!detector.inFrame) message = "Step into frame";
-    else if (detector.waitingForNeutral) message = "Lower your arms";
-    else message = "Do the next movement";
-  }
-  if (phase === "feedback")
-    message = passed ? "Well done, correct sequence" : "Incorrect";
-
-  return (
-    <div>
-      <h2>
-        Round {round} of {TOTAL_ROUNDS}
-      </h2>
-      <p style={{ fontSize: "1.5rem" }}>
-        <strong>{message}</strong>
-      </p>
-      <SequenceSlots
-        sequence={sequence}
-        progress={progress}
-        phase={phase}
-        passed={passed}
-      />
-    </div>
-  );
-}
-
+// The visitor journey, in order:
+// terms → game → reveal → board → choice → debrief → (back to terms for the next visitor)
 function App() {
-  const { videoRef, status: cameraStatus, error: cameraError } = useCamera();
-  const {
-    posesRef,
-    connections,
-    status: poseStatus,
-    error: poseError,
-  } = useBodyPose(videoRef, { enabled: cameraStatus === "ready" });
-  const game = useSequenceGame();
-  const detector = useMovementDetector(posesRef, {
-    enabled: game.state.phase === "perform",
-    onMovement: game.reportMovement,
-  });
+  const [stage, setStage] = useState("terms");
+  const [currentPortrait, setCurrentPortrait] = useState(null);
+  // Portraits live only in memory: a page reload clears the board.
+  const [boardPortraits, setBoardPortraits] = useState([]);
+
+  function handleGameComplete(src) {
+    const portrait = src ? { id: crypto.randomUUID(), src } : null;
+    setCurrentPortrait(portrait);
+    if (portrait) {
+      // Newest first, oldest dropped once the board is full.
+      setBoardPortraits((previous) =>
+        [portrait, ...previous].slice(0, MAX_BOARD_PORTRAITS)
+      );
+    }
+    setStage("reveal");
+  }
+
+  function handleRestart() {
+    setCurrentPortrait(null);
+    setStage("terms");
+  }
 
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>A2 Prototype: sequence game</h1>
-      {cameraError && <p style={{ color: "crimson" }}>{cameraError}</p>}
-      {poseError && <p style={{ color: "crimson" }}>{poseError}</p>}
-
-      <div
-        style={{
-          display: "flex",
-          gap: "2rem",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ position: "relative", width: 640, maxWidth: "100%" }}>
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{
-              display: "block",
-              width: "100%",
-              height: "auto",
-              transform: "scaleX(-1)",
-              background: "#111",
-            }}
-          />
-          <PoseOverlay
-            videoRef={videoRef}
-            posesRef={posesRef}
-            connections={connections}
-          />
-        </div>
-
-        <GamePanel
-          game={game}
-          detector={detector}
-          ready={poseStatus === "detecting"}
+      {stage === "terms" && (
+        <TermsOfService onAccept={() => setStage("game")} />
+      )}
+      {stage === "game" && <MovementGame onComplete={handleGameComplete} />}
+      {stage === "reveal" && (
+        <PortraitReveal
+          portrait={currentPortrait}
+          onContinue={() => setStage("board")}
         />
-      </div>
+      )}
+      {stage === "board" && (
+        <PortraitBoard
+          portraits={boardPortraits}
+          currentId={currentPortrait?.id}
+          onContinue={() => setStage("choice")}
+        />
+      )}
+      {stage === "choice" && (
+        <FinalChoice onChoose={() => setStage("debrief")} />
+      )}
+      {stage === "debrief" && <Debrief onFinish={handleRestart} />}
     </main>
   );
 }
