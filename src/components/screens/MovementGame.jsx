@@ -4,14 +4,54 @@ import { useBodyPose } from "../../hooks/useBodyPose";
 import { useMovementDetector } from "../../hooks/useMovementDetector";
 import { useSequenceGame } from "../../hooks/useSequenceGame";
 import PoseOverlay from "../camera/PoseOverlay";
+import ProgressBar from "../shared/ProgressBar";
 import { MOVEMENTS } from "../../logic/movements";
-import { TOTAL_ROUNDS } from "../../logic/sequenceGame";
+import { TOTAL_ROUNDS, gameProgress } from "../../logic/sequenceGame";
 import { capturePortrait } from "../../lib/capturePortrait";
 
 const LABELS = Object.fromEntries(
   MOVEMENTS.map((movement) => [movement.id, movement.label])
 );
 const FINISH_DELAY_MS = 2500; // pause on "processing" before handing off to the reveal
+
+// Shown before the game starts. Explains the mechanics only, never the portrait.
+function Instructions({ ready, onStart }) {
+  return (
+    <div style={{ maxWidth: 420 }}>
+      {/* PLACEHOLDER copy: the group can rewrite this. */}
+      <h2>How it works</h2>
+      <ol style={{ lineHeight: 1.7, paddingLeft: "1.25rem" }}>
+        <li>Stand so your head, shoulders and arms are visible on screen.</li>
+        <li>
+          Each round, a sequence of movements appears. Memorise it before it
+          disappears.
+        </li>
+        <li>Perform the movements in order, from memory.</li>
+        <li>
+          Hold each movement for a moment, then lower your arms before the next
+          one.
+        </li>
+        <li>
+          There are {TOTAL_ROUNDS} rounds. Each one you complete adds a movement
+          to the next.
+        </li>
+      </ol>
+
+      <p style={{ marginBottom: "0.25rem" }}>
+        <strong>The movements:</strong>
+      </p>
+      <ul style={{ lineHeight: 1.7, paddingLeft: "1.25rem", marginTop: 0 }}>
+        {MOVEMENTS.map((movement) => (
+          <li key={movement.id}>{movement.label}</li>
+        ))}
+      </ul>
+
+      <button type="button" onClick={onStart} disabled={!ready}>
+        {ready ? "Start" : "Waiting for camera and model…"}
+      </button>
+    </div>
+  );
+}
 
 // One row per movement. During perform, remaining moves are hidden; finished ones stay checked.
 function SequenceSlots({ sequence, progress, phase, passed }) {
@@ -40,15 +80,20 @@ function GamePanel({ state, detector, ready, onStart }) {
   const { phase, round, sequence, progress, passed } = state;
 
   if (phase === "idle") {
-    return (
-      <button type="button" onClick={onStart} disabled={!ready}>
-        {ready ? "Start" : "Waiting for camera and model…"}
-      </button>
-    );
+    return <Instructions ready={ready} onStart={onStart} />;
   }
 
+  const progressBar = (
+    <ProgressBar value={gameProgress(state)} label="Building your result" />
+  );
+
   if (phase === "finished") {
-    return <h2>Processing your results…</h2>;
+    return (
+      <div>
+        {progressBar}
+        <h2>Processing your results…</h2>
+      </div>
+    );
   }
 
   let message = "";
@@ -63,6 +108,7 @@ function GamePanel({ state, detector, ready, onStart }) {
 
   return (
     <div>
+      {progressBar}
       <h2>
         Round {round} of {TOTAL_ROUNDS}
       </h2>

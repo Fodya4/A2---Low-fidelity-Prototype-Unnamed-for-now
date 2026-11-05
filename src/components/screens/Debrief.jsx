@@ -1,4 +1,6 @@
 import { useEffect, useEffectEvent } from "react";
+// Imported (not referenced by path) so Vite adds the correct base path for GitHub Pages.
+import pointAndLaugh from "../../assets/point-and-laugh.png";
 
 const AUTO_RETURN_MS = 20000; // return to the start for the next visitor
 
@@ -13,6 +15,17 @@ function Debrief({ onFinish }) {
 
   return (
     <section style={{ maxWidth: 640 }}>
+      <img
+        src={pointAndLaugh}
+        alt="Cartoon emoji covering its mouth, pointing and laughing"
+        style={{
+          width: 200,
+          maxWidth: "50%",
+          display: "block",
+          marginBottom: "1rem",
+        }}
+      />
+
       {/* PLACEHOLDER copy: must match what the instructor approves for debriefing. */}
       <h1>Thank you for participating</h1>
       <p>

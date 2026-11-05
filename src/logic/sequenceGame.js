@@ -98,3 +98,16 @@ export function gameReducer(state, action) {
       return state;
   }
 }
+
+// --- Progress bar value (0 to 1) ---
+// Finished rounds count fully, pass or fail: the bar always reaches 100%,
+// because the outcome never actually depended on performance.
+// During a round, each correct movement adds a slice of that round.
+export function gameProgress(state) {
+  if (state.phase === "idle") return 0;
+  if (state.phase === "finished") return 1;
+  const finishedRounds = state.history.length;
+  const withinRound =
+    state.phase === "perform" ? state.progress / state.sequence.length : 0;
+  return Math.min(1, (finishedRounds + withinRound) / TOTAL_ROUNDS);
+}
