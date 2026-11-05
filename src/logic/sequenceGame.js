@@ -34,15 +34,28 @@ export const initialGameState = {
   phase: "idle",
   round: 0,
   sequence: [],
-  progress: 0, // how many movements in this round were done correctly
-  passed: null, // result of the round just finished
+  progress: 0, // how many movements in this round have been attempted
+  results: [], // one true/false per attempted movement this round
+  passed: null, // whether the round just finished was fully correct
   history: [], // one entry per finished round
 };
 
-function endRound(state, passed) {
+// Records one attempt (correct or not) and ends the round after the last movement.
+// The round passes only if every movement was correct.
+function recordAttempt(state, correct) {
+  const results = [...state.results, correct];
+  const progress = state.progress + 1;
+
+  if (progress < state.sequence.length) {
+    return { ...state, progress, results };
+  }
+
+  const passed = results.every(Boolean);
   return {
     ...state,
     phase: "feedback",
+    progress,
+    results,
     passed,
     history: [
       ...state.history,
@@ -63,21 +76,18 @@ export function gameReducer(state, action) {
 
     case "BEGIN_PERFORM":
       if (state.phase !== "show") return state;
-      return { ...state, phase: "perform", progress: 0 };
+      return { ...state, phase: "perform", progress: 0, results: [] };
 
     case "MOVEMENT": {
       if (state.phase !== "perform") return state;
       const expected = state.sequence[state.progress];
-      if (action.id !== expected) return endRound(state, false); // wrong move: round over
-      const progress = state.progress + 1;
-      if (progress === state.sequence.length)
-        return endRound({ ...state, progress }, true);
-      return { ...state, progress };
+      return recordAttempt(state, action.id === expected);
     }
 
     case "TIMEOUT":
+      // No movement in time: counts as a missed movement, then the round continues.
       if (state.phase !== "perform") return state;
-      return endRound(state, false);
+      return recordAttempt(state, false);
 
     case "NEXT_ROUND":
       if (state.phase !== "feedback") return state;
@@ -88,6 +98,7 @@ export function gameReducer(state, action) {
         round: state.round + 1,
         sequence: action.sequence,
         progress: 0,
+        results: [],
         passed: null,
       };
 
@@ -100,9 +111,8 @@ export function gameReducer(state, action) {
 }
 
 // --- Progress bar value (0 to 1) ---
-// Finished rounds count fully, pass or fail: the bar always reaches 100%,
+// Every attempt fills the bar, right or wrong: the bar always reaches 100%,
 // because the outcome never actually depended on performance.
-// During a round, each correct movement adds a slice of that round.
 export function gameProgress(state) {
   if (state.phase === "idle") return 0;
   if (state.phase === "finished") return 1;

@@ -32,8 +32,8 @@ function Instructions({ ready, onStart }) {
           one.
         </li>
         <li>
-          There are {TOTAL_ROUNDS} rounds. Each one you complete adds a movement
-          to the next.
+          There are {TOTAL_ROUNDS} rounds. Get every movement in a round right,
+          and the next round adds one more.
         </li>
       </ol>
 
@@ -53,18 +53,17 @@ function Instructions({ ready, onStart }) {
   );
 }
 
-// One row per movement. During perform, remaining moves are hidden; finished ones stay checked.
-function SequenceSlots({ sequence, progress, phase, passed }) {
+// One row per movement. Attempted movements show ✅ or ❌ and stay marked;
+// movements not yet attempted stay hidden during perform (the memory part).
+function SequenceSlots({ sequence, results, phase }) {
   return (
     <ol style={{ fontSize: "1.25rem", lineHeight: 2 }}>
       {sequence.map((id, index) => {
+        const attempted = index < results.length;
         let icon = "⬜";
-        if (index < progress) icon = "✅";
-        else if (phase === "feedback" && !passed && index === progress)
-          icon = "❌";
+        if (attempted) icon = results[index] ? "✅" : "❌";
 
-        const revealed =
-          phase === "show" || phase === "feedback" || index < progress;
+        const revealed = phase === "show" || phase === "feedback" || attempted;
         return (
           <li key={index}>
             {phase === "show" ? "" : `${icon} `}
@@ -77,7 +76,7 @@ function SequenceSlots({ sequence, progress, phase, passed }) {
 }
 
 function GamePanel({ state, detector, ready, onStart }) {
-  const { phase, round, sequence, progress, passed } = state;
+  const { phase, round, sequence, results, passed } = state;
 
   if (phase === "idle") {
     return <Instructions ready={ready} onStart={onStart} />;
@@ -99,12 +98,26 @@ function GamePanel({ state, detector, ready, onStart }) {
   let message = "";
   if (phase === "show") message = "Memorise this sequence";
   if (phase === "perform") {
-    if (!detector.inFrame) message = "Step into frame";
-    else if (detector.waitingForNeutral) message = "Lower your arms";
-    else message = "Do the next movement";
+    const lastResult = results.at(-1); // undefined before the first attempt
+    if (!detector.inFrame) {
+      message = "Step into frame";
+    } else if (detector.waitingForNeutral) {
+      // Immediate feedback on the movement just attempted, combined with the next instruction.
+      if (lastResult === undefined) message = "Lower your arms";
+      else
+        message = lastResult
+          ? "Correct. Lower your arms"
+          : "Incorrect. Lower your arms";
+    } else {
+      message = "Do the next movement";
+    }
   }
-  if (phase === "feedback")
-    message = passed ? "Well done, correct sequence" : "Incorrect";
+  if (phase === "feedback") {
+    const correctCount = results.filter(Boolean).length;
+    message = passed
+      ? "Well done, correct sequence"
+      : `Incorrect sequence: ${correctCount} of ${sequence.length} correct`;
+  }
 
   return (
     <div>
@@ -115,12 +128,7 @@ function GamePanel({ state, detector, ready, onStart }) {
       <p style={{ fontSize: "1.5rem" }}>
         <strong>{message}</strong>
       </p>
-      <SequenceSlots
-        sequence={sequence}
-        progress={progress}
-        phase={phase}
-        passed={passed}
-      />
+      <SequenceSlots sequence={sequence} results={results} phase={phase} />
     </div>
   );
 }
