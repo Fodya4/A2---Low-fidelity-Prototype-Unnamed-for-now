@@ -3,6 +3,7 @@ import { useCamera } from "../../hooks/useCamera";
 import { useBodyPose } from "../../hooks/useBodyPose";
 import { useMovementDetector } from "../../hooks/useMovementDetector";
 import { useSequenceGame, TIMING } from "../../hooks/useSequenceGame";
+import { useFaceInFrame } from "../../hooks/useFaceInFrame";
 import PoseOverlay from "../camera/PoseOverlay";
 import ProgressBar from "../shared/ProgressBar";
 import { MOVEMENTS } from "../../logic/movements";
@@ -14,8 +15,13 @@ const LABELS = Object.fromEntries(
 );
 const FINISH_DELAY_MS = 2500; // pause on "processing" before handing off to the next screen
 
-// Shown before the game starts. Explains the mechanics only, never the portrait.
-function Instructions({ ready, onStart }) {
+// The instructions screen (the game's idle phase). Start stays disabled
+// until the camera and model are ready AND a face is clearly in frame.
+function Instructions({ ready, faceReady, onStart }) {
+  let buttonLabel = "Start";
+  if (!ready) buttonLabel = "Waiting for camera and model…";
+  else if (!faceReady) buttonLabel = "Position your face in the frame to begin";
+
   return (
     <div style={{ maxWidth: 420 }}>
       {/* PLACEHOLDER copy: the group can rewrite this. */}
@@ -48,8 +54,8 @@ function Instructions({ ready, onStart }) {
         ))}
       </ul>
 
-      <button type="button" onClick={onStart} disabled={!ready}>
-        {ready ? "Start" : "Waiting for camera and model…"}
+      <button type="button" onClick={onStart} disabled={!ready || !faceReady}>
+        {buttonLabel}
       </button>
     </div>
   );
@@ -95,11 +101,13 @@ function SequenceSlots({ sequence, results, phase }) {
   );
 }
 
-function GamePanel({ state, detector, ready, onStart }) {
+function GamePanel({ state, detector, ready, faceReady, onStart }) {
   const { phase, round, sequence, results, passed } = state;
 
   if (phase === "idle") {
-    return <Instructions ready={ready} onStart={onStart} />;
+    return (
+      <Instructions ready={ready} faceReady={faceReady} onStart={onStart} />
+    );
   }
 
   const progressBar = (
@@ -169,16 +177,25 @@ function MovementGame({ onComplete }) {
     onMovement: game.reportMovement,
   });
 
+  const ready = poseStatus === "detecting";
+  // Face check only runs on the instructions screen, before the game starts.
+  const faceReady = useFaceInFrame(posesRef, {
+    enabled: ready && game.state.phase === "idle",
+  });
+
   // Holds the portrait until the game ends. A ref, because the screen never displays it.
   const portraitRef = useRef(null);
 
   function handleStart() {
+    if (!faceReady) return; // safety: never capture without a face in frame
     portraitRef.current = capturePortrait(videoRef.current);
     game.start();
   }
 
-  // When the game finishes, wait briefly, then hand the portrait to App.
-  const finish = useEffectEvent(() => onComplete(portraitRef.current));
+  // When the game finishes, wait briefly, then hand the portrait and results to App.
+  const finish = useEffectEvent(() => {
+    onComplete({ portrait: portraitRef.current, history: game.state.history });
+  });
   const finished = game.state.phase === "finished";
 
   useEffect(() => {
@@ -223,7 +240,8 @@ function MovementGame({ onComplete }) {
         <GamePanel
           state={game.state}
           detector={detector}
-          ready={poseStatus === "detecting"}
+          ready={ready}
+          faceReady={faceReady}
           onStart={handleStart}
         />
       </div>

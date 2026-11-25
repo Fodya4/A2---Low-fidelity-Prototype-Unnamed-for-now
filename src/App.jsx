@@ -1,61 +1,61 @@
 import { useState } from "react";
+import StartScreen from "./components/screens/StartScreen";
 import TermsOfService from "./components/screens/TermsOfService";
 import MovementGame from "./components/screens/MovementGame";
-import PortraitReveal from "./components/screens/PortraitReveal";
-import PortraitBoard from "./components/screens/PortraitBoard";
-import FinalChoice from "./components/screens/FinalChoice";
-import Debrief from "./components/screens/Debrief";
+import AnalyzingScreen from "./components/screens/AnalyzingScreen";
+import Marketplace from "./components/screens/Marketplace";
 
-const MAX_BOARD_PORTRAITS = 30;
+const MAX_PARTICIPANTS = 30;
 
 // The visitor journey, in order:
-// terms → game → reveal → board → choice → debrief → (back to terms for the next visitor)
+// start → consent → game (instructions + play) → analyzing → marketplace → (back to start)
 function App() {
-  const [stage, setStage] = useState("terms");
-  const [currentPortrait, setCurrentPortrait] = useState(null);
-  // Portraits live only in memory: a page reload clears the board.
-  const [boardPortraits, setBoardPortraits] = useState([]);
+  const [stage, setStage] = useState("start");
+  const [participant, setParticipant] = useState(null); // the current visitor
+  // Every participant this session, newest first. Memory only: a reload clears it.
+  const [participants, setParticipants] = useState([]);
+  const [subjectCount, setSubjectCount] = useState(0);
 
-  function handleGameComplete(src) {
-    const portrait = src ? { id: crypto.randomUUID(), src } : null;
-    setCurrentPortrait(portrait);
+  function handleGameComplete({ portrait, history }) {
+    const number = subjectCount + 1;
+    const newParticipant = {
+      id: crypto.randomUUID(),
+      number,
+      portrait,
+      history,
+    };
+    setSubjectCount(number);
+    setParticipant(newParticipant);
     if (portrait) {
-      // Newest first, oldest dropped once the board is full.
-      setBoardPortraits((previous) =>
-        [portrait, ...previous].slice(0, MAX_BOARD_PORTRAITS)
+      setParticipants((previous) =>
+        [newParticipant, ...previous].slice(0, MAX_PARTICIPANTS)
       );
     }
-    setStage("reveal");
+    setStage("analyzing");
   }
 
   function handleRestart() {
-    setCurrentPortrait(null);
-    setStage("terms");
+    setParticipant(null);
+    setStage("start");
   }
 
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      {stage === "terms" && (
+      {stage === "start" && <StartScreen onBegin={() => setStage("consent")} />}
+      {stage === "consent" && (
         <TermsOfService onAccept={() => setStage("game")} />
       )}
       {stage === "game" && <MovementGame onComplete={handleGameComplete} />}
-      {stage === "reveal" && (
-        <PortraitReveal
-          portrait={currentPortrait}
-          onContinue={() => setStage("board")}
+      {stage === "analyzing" && (
+        <AnalyzingScreen onDone={() => setStage("marketplace")} />
+      )}
+      {stage === "marketplace" && (
+        <Marketplace
+          participant={participant}
+          others={participants.filter((other) => other.id !== participant.id)}
+          onFinish={handleRestart}
         />
       )}
-      {stage === "board" && (
-        <PortraitBoard
-          portraits={boardPortraits}
-          currentId={currentPortrait?.id}
-          onContinue={() => setStage("choice")}
-        />
-      )}
-      {stage === "choice" && (
-        <FinalChoice onChoose={() => setStage("debrief")} />
-      )}
-      {stage === "debrief" && <Debrief onFinish={handleRestart} />}
     </main>
   );
 }
