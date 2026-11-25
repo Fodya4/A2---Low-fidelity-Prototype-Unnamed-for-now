@@ -12,8 +12,8 @@ const TICK_MS = 50; // how often we check the latest pose
  *   2. No repeats: the movement that registered last can't register again.
  *      Sequences never repeat a movement back to back, so visitors can go
  *      straight from one pose to the next without lowering their arms.
- *   3. A pose already held when detection starts doesn't count until the
- *      visitor changes position.
+ *   A pose already held when detection starts (e.g. someone getting ready
+ *   during the countdown) counts once it has been held long enough.
  * Returns:
  *   inFrame: false when the visitor's shoulders aren't visible
  */
@@ -27,9 +27,9 @@ export function useMovementDetector(posesRef, { enabled, onMovement }) {
     if (!enabled) return;
 
     let lastRegistered = null; // the movement that registered most recently
-    let candidate; // the movement (or null = no movement) currently being held; undefined until the first check
-    let since = 0; // when the current candidate started
-    let eligible = false; // whether the current candidate is allowed to register
+    let candidate = null; // the movement (or null = no movement) currently being held
+    let since = performance.now(); // when the current candidate started
+    let eligible = true; // whether the current candidate is allowed to register
 
     const intervalId = setInterval(() => {
       const now = performance.now();
@@ -43,14 +43,6 @@ export function useMovementDetector(posesRef, { enabled, onMovement }) {
       if (!visible) {
         candidate = null;
         since = now;
-        return;
-      }
-
-      // First check of this round: whatever pose they're already in doesn't count.
-      if (candidate === undefined) {
-        candidate = active;
-        since = now;
-        eligible = active === null;
         return;
       }
 

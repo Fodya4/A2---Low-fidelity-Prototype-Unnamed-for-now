@@ -9,29 +9,42 @@ import {
 
 // All timings in one place for easy tuning.
 export const TIMING = {
-  showBaseMs: 1500, // prompts stay visible this long...
-  showPerMoveMs: 1500, // ...plus this much per movement, then disappear
-  moveTimeoutMs: 6000, // max time for each movement (includes lowering arms first)
-  feedbackMs: 2500, // how long "correct"/"incorrect" stays on screen
+  showBaseMs: 2000, // prompts stay visible this long...
+  showPerMoveMs: 2000, // ...plus this much per movement, then the countdown starts
+  countdownFrom: 3, // countdown starts at this number (one second per number)
+  goMs: 700, // how long "Go!" stays on screen before performing starts
+  moveTimeoutMs: 8000, // max time for each movement
+  feedbackMs: 3000, // how long the round result stays on screen
 };
 
 export function useSequenceGame() {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const { phase, sequence, progress, passed } = state;
 
-  // Memorise phase: show prompts, then hide them and start performing.
+  // Memorise phase: show prompts, then start the countdown.
   useEffect(() => {
     if (phase !== "show") return;
     const duration = TIMING.showBaseMs + TIMING.showPerMoveMs * sequence.length;
     const timeoutId = setTimeout(
-      () => dispatch({ type: "BEGIN_PERFORM" }),
+      () => dispatch({ type: "BEGIN_COUNTDOWN" }),
       duration
     );
     return () => clearTimeout(timeoutId);
   }, [phase, sequence]);
 
+  // Countdown phase: 3, 2, 1, Go!, then start performing.
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    const duration = TIMING.countdownFrom * 1000 + TIMING.goMs;
+    const timeoutId = setTimeout(
+      () => dispatch({ type: "BEGIN_PERFORM" }),
+      duration
+    );
+    return () => clearTimeout(timeoutId);
+  }, [phase]);
+
   // Perform phase: each movement gets its own time limit.
-  // progress in the dependencies restarts the timer after every correct move.
+  // progress in the dependencies restarts the timer after every attempt.
   useEffect(() => {
     if (phase !== "perform") return;
     const timeoutId = setTimeout(

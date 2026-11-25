@@ -28,7 +28,8 @@ export function buildNextSequence(sequence, passed) {
 }
 
 // --- Game state ---
-// phase: 'idle' → 'show' (memorise) → 'perform' → 'feedback' → next round... → 'finished'
+// phase: 'idle' → 'show' (memorise) → 'countdown' → 'perform' → 'feedback'
+//        → next round... → 'finished'
 
 export const initialGameState = {
   phase: "idle",
@@ -74,8 +75,12 @@ export function gameReducer(state, action) {
         sequence: action.sequence,
       };
 
-    case "BEGIN_PERFORM":
+    case "BEGIN_COUNTDOWN":
       if (state.phase !== "show") return state;
+      return { ...state, phase: "countdown" };
+
+    case "BEGIN_PERFORM":
+      if (state.phase !== "countdown") return state;
       return { ...state, phase: "perform", progress: 0, results: [] };
 
     case "MOVEMENT": {

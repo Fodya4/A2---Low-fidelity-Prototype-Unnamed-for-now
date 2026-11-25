@@ -1,8 +1,8 @@
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useCamera } from "../../hooks/useCamera";
 import { useBodyPose } from "../../hooks/useBodyPose";
 import { useMovementDetector } from "../../hooks/useMovementDetector";
-import { useSequenceGame } from "../../hooks/useSequenceGame";
+import { useSequenceGame, TIMING } from "../../hooks/useSequenceGame";
 import PoseOverlay from "../camera/PoseOverlay";
 import ProgressBar from "../shared/ProgressBar";
 import { MOVEMENTS } from "../../logic/movements";
@@ -26,7 +26,9 @@ function Instructions({ ready, onStart }) {
           Each round, a sequence of movements appears. Memorise it before it
           disappears.
         </li>
-        <li>Perform the movements in order, from memory.</li>
+        <li>
+          After the countdown, perform the movements in order, from memory.
+        </li>
         <li>
           Hold each movement for a moment until it registers, then go to the
           next one.
@@ -53,8 +55,26 @@ function Instructions({ ready, onStart }) {
   );
 }
 
+// Counts down from TIMING.countdownFrom to "Go!", one number per second.
+// Only mounted during the countdown phase, so it starts fresh every round.
+function Countdown() {
+  const [count, setCount] = useState(TIMING.countdownFrom);
+
+  useEffect(() => {
+    if (count <= 0) return;
+    const timeoutId = setTimeout(() => setCount((value) => value - 1), 1000);
+    return () => clearTimeout(timeoutId);
+  }, [count]);
+
+  return (
+    <p style={{ fontSize: "4rem", fontWeight: 700, margin: "0.5rem 0" }}>
+      {count > 0 ? count : "Go!"}
+    </p>
+  );
+}
+
 // One row per movement. Attempted movements show ✅ or ❌ and stay marked;
-// movements not yet attempted stay hidden during perform (the memory part).
+// movements not yet attempted stay hidden (the memory part).
 function SequenceSlots({ sequence, results, phase }) {
   return (
     <ol style={{ fontSize: "1.25rem", lineHeight: 2 }}>
@@ -96,7 +116,9 @@ function GamePanel({ state, detector, ready, onStart }) {
   }
 
   let message = "";
-  if (phase === "show") message = "Memorise this sequence";
+  if (phase === "show")
+    message = "Memorise these movements. You'll repeat them in order.";
+  if (phase === "countdown") message = "Get ready…";
   if (phase === "perform") {
     const lastResult = results.at(-1); // undefined before the first attempt
     const nextNumber = results.length + 1;
@@ -127,6 +149,7 @@ function GamePanel({ state, detector, ready, onStart }) {
       <p style={{ fontSize: "1.5rem" }}>
         <strong>{message}</strong>
       </p>
+      {phase === "countdown" && <Countdown />}
       <SequenceSlots sequence={sequence} results={results} phase={phase} />
     </div>
   );
