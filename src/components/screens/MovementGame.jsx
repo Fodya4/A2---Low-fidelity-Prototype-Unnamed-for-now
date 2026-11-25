@@ -12,7 +12,7 @@ import { capturePortrait } from "../../lib/capturePortrait";
 const LABELS = Object.fromEntries(
   MOVEMENTS.map((movement) => [movement.id, movement.label])
 );
-const FINISH_DELAY_MS = 2500; // pause on "processing" before handing off to the reveal
+const FINISH_DELAY_MS = 2500; // pause on "processing" before handing off to the next screen
 
 // Shown before the game starts. Explains the mechanics only, never the portrait.
 function Instructions({ ready, onStart }) {
@@ -28,8 +28,8 @@ function Instructions({ ready, onStart }) {
         </li>
         <li>Perform the movements in order, from memory.</li>
         <li>
-          Hold each movement for a moment, then lower your arms before the next
-          one.
+          Hold each movement for a moment until it registers, then go to the
+          next one.
         </li>
         <li>
           There are {TOTAL_ROUNDS} rounds. Get every movement in a round right,
@@ -99,17 +99,16 @@ function GamePanel({ state, detector, ready, onStart }) {
   if (phase === "show") message = "Memorise this sequence";
   if (phase === "perform") {
     const lastResult = results.at(-1); // undefined before the first attempt
+    const nextNumber = results.length + 1;
     if (!detector.inFrame) {
       message = "Step into frame";
-    } else if (detector.waitingForNeutral) {
-      // Immediate feedback on the movement just attempted, combined with the next instruction.
-      if (lastResult === undefined) message = "Lower your arms";
-      else
-        message = lastResult
-          ? "Correct. Lower your arms"
-          : "Incorrect. Lower your arms";
+    } else if (lastResult === undefined) {
+      message = "Do movement 1";
     } else {
-      message = "Do the next movement";
+      // Immediate feedback on the last movement, plus which movement comes next.
+      message = `${
+        lastResult ? "Correct" : "Incorrect"
+      }. Now do movement ${nextNumber}`;
     }
   }
   if (phase === "feedback") {
