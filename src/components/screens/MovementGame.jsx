@@ -35,15 +35,36 @@ const TITLES = {
   perform: "Now do the Movement Sequence:",
 };
 
+// Captions for candid photos, by what the visitor was doing at the time.
+const PHASE_ACTIVITY = {
+  show: "Memorising the sequence",
+  countdown: "Waiting for the countdown",
+  perform: "Between movements",
+  feedback: "Reviewing round results",
+};
+
 const MOVE_SECONDS = Math.round(TIMING.moveTimeoutMs / 1000); // per-movement countdown
 const FINISH_DELAY_MS = 2500; // pause on "processing" before handing off to the next screen
-const SNAPSHOT_MAX_WIDTH = 360; // in-game snapshots are smaller than the thumbnail
+const SNAPSHOT_MAX_WIDTH = 360; // in-game photos are smaller than the thumbnail
+
+// Candid photos: up to CANDID_MAX, each a random 4–9 seconds after the last.
+const CANDID_MAX = 8;
+const CANDID_MIN_GAP_MS = 4000;
+const CANDID_MAX_GAP_MS = 9000;
 
 // Which screen layout each game phase uses.
 function layoutFor(phase) {
   if (phase === "idle") return "instructions"; // Screen 3
   if (phase === "show") return "memorise"; // Screen 4
   return "perform"; // Screen 5 (countdown, perform, feedback, finished)
+}
+
+// Milliseconds since Start, as a surveillance-style "mm:ss" timecode.
+function formatTimecode(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
 
 // Screen 3 text, from the group's Figma (steps 3 and 4 reworded: no reset needed).
@@ -196,8 +217,23 @@ function MovementGame({ onComplete }) {
 
   // Photos are held in refs: the game screen never displays them.
   const portraitRef = useRef(null); // the thumbnail, taken at Start
-  const snapshotsRef = useRef([]); // one sneaky photo per round
-  const capturePlanRef = useRef(null); // which movement triggers this round's photo
+  const snapshotsRef = useRef([]); // movement shots + candid shots, in time order
+  const capturePlanRef = useRef(null); // which movement triggers this round's movement shot
+  const startedAtRef = useRef(0); // when Start was pressed, for timecodes
+
+  // Takes one in-game photo and records what the visitor was doing.
+  function takeSnapshot(activity) {
+    const src = capturePortrait(videoRef.current, {
+      maxWidth: SNAPSHOT_MAX_WIDTH,
+    });
+    if (!src) return;
+    snapshotsRef.current.push({
+      src,
+      round,
+      activity,
+      time: formatTimecode(performance.now() - startedAtRef.current),
+    });
+  }
 
   // At the start of each perform phase, secretly pick one movement to photograph.
   useEffect(() => {
@@ -208,15 +244,39 @@ function MovementGame({ onComplete }) {
     };
   }, [phase, round, sequence.length]);
 
+  // Candid photos at random moments throughout the game, whatever the visitor is doing.
+  // useEffectEvent: the timer always sees the latest phase and round without restarting.
+  const takeCandid = useEffectEvent(() =>
+    takeSnapshot(PHASE_ACTIVITY[phase] ?? "In session")
+  );
+  const playing = phase !== "idle" && phase !== "finished";
+
+  useEffect(() => {
+    if (!playing) return;
+    let timeoutId;
+    let taken = 0;
+
+    function scheduleNext() {
+      const gap =
+        CANDID_MIN_GAP_MS +
+        Math.random() * (CANDID_MAX_GAP_MS - CANDID_MIN_GAP_MS);
+      timeoutId = setTimeout(() => {
+        takeCandid();
+        taken += 1;
+        if (taken < CANDID_MAX) scheduleNext();
+      }, gap);
+    }
+
+    scheduleNext();
+    return () => clearTimeout(timeoutId);
+  }, [playing]);
+
   // Called by the detector for every confirmed movement.
   function handleMovement(id) {
     const plan = capturePlanRef.current;
     // results.length is the number of the attempt happening right now (0-based).
     if (plan && plan.round === round && plan.index === results.length) {
-      const src = capturePortrait(videoRef.current, {
-        maxWidth: SNAPSHOT_MAX_WIDTH,
-      });
-      if (src) snapshotsRef.current.push({ src, round, movement: LABELS[id] });
+      takeSnapshot(LABELS[id]);
     }
     game.reportMovement(id);
   }
@@ -230,6 +290,7 @@ function MovementGame({ onComplete }) {
     if (!faceReady) return; // safety: never capture without a face in frame
     portraitRef.current = capturePortrait(videoRef.current);
     snapshotsRef.current = [];
+    startedAtRef.current = performance.now();
     game.start();
   }
 

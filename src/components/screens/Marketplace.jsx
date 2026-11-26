@@ -13,15 +13,15 @@ function formatSeconds(ms) {
   return ms === null ? "n/a" : `${(ms / 1000).toFixed(1)}s`;
 }
 
-// Every image in a listing: the face thumbnail first, then the in-game captures.
+// Every image in a listing: the face thumbnail first, then the in-game photos in time order.
 function listingImages(participant) {
   const images = [];
   if (participant.portrait)
-    images.push({ src: participant.portrait, caption: "Facial image" });
+    images.push({ src: participant.portrait, caption: "Facial image · 00:00" });
   participant.snapshots.forEach((snapshot) => {
     images.push({
       src: snapshot.src,
-      caption: `Round ${snapshot.round} · ${snapshot.movement}`,
+      caption: `Round ${snapshot.round} · ${snapshot.activity} · ${snapshot.time}`,
     });
   });
   return images;
@@ -69,7 +69,7 @@ function completedSale(auction) {
   };
 }
 
-// The image area: one image at a time with previous/next arrows.
+// The image area: a large image with arrows, its caption, and a clickable thumbnail strip.
 function ListingCarousel({ images, sold }) {
   const [index, setIndex] = useState(0);
 
@@ -83,39 +83,60 @@ function ListingCarousel({ images, sold }) {
     setIndex((value) => (value + step + images.length) % images.length);
 
   return (
-    <figure className="listing__media">
-      <div className="listing__frame">
-        <img
-          src={current.src}
-          alt={current.caption}
-          className="listing__image"
-        />
-        {sold && <span className="listing__sold">Sold</span>}
-        {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              className="listing__arrow listing__arrow--prev"
-              onClick={() => go(-1)}
-              aria-label="Previous image"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              type="button"
-              className="listing__arrow listing__arrow--next"
-              onClick={() => go(1)}
-              aria-label="Next image"
-            >
-              <ChevronRight />
-            </button>
-          </>
-        )}
-      </div>
-      <figcaption className="listing__caption">
-        {current.caption} · {index + 1}/{images.length}
-      </figcaption>
-    </figure>
+    <div className="listing__media">
+      <figure className="listing__figure">
+        <div className="listing__frame">
+          <img
+            src={current.src}
+            alt={current.caption}
+            className="listing__image"
+          />
+          {sold && <span className="listing__sold">Sold</span>}
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="listing__arrow listing__arrow--prev"
+                onClick={() => go(-1)}
+                aria-label="Previous image"
+              >
+                <ChevronLeft />
+              </button>
+              <button
+                type="button"
+                className="listing__arrow listing__arrow--next"
+                onClick={() => go(1)}
+                aria-label="Next image"
+              >
+                <ChevronRight />
+              </button>
+            </>
+          )}
+        </div>
+        <figcaption className="listing__caption">
+          {current.caption} · {index + 1}/{images.length}
+        </figcaption>
+      </figure>
+
+      {images.length > 1 && (
+        <ol className="listing__thumbs">
+          {images.map((image, imageIndex) => (
+            <li key={imageIndex}>
+              <button
+                type="button"
+                className={`listing__thumb ${
+                  imageIndex === index ? "listing__thumb--active" : ""
+                }`}
+                onClick={() => setIndex(imageIndex)}
+                aria-label={`Show image ${imageIndex + 1}: ${image.caption}`}
+              >
+                <img src={image.src} alt="" />
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   );
 }
 

@@ -47,6 +47,13 @@
 }
 
 .listing__media {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0; /* lets the thumbnail strip scroll instead of stretching the column */
+}
+
+.listing__figure {
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -103,7 +110,48 @@
 
 .listing__caption {
   color: var(--color-text-muted);
-  font-size: var(--font-size-body);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+/* Thumbnail strip: scrolls sideways when there are many photos. */
+.listing__thumbs {
+  list-style: none;
+  margin: 0;
+  padding: 4px; /* room for the active outline */
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-muted) transparent;
+}
+
+.listing__thumb {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.listing__thumb:hover,
+.listing__thumb--active {
+  opacity: 1;
+}
+
+.listing__thumb img {
+  display: block;
+  width: 72px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.listing__thumb--active img {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
 }
 
 /* The rotated SOLD stamp across the image. */
