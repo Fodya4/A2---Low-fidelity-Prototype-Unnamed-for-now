@@ -1,5 +1,5 @@
 // PLACEHOLDER: replace with the installation's real name.
-const GAME_TITLE = "UNTITLED";
+const GAME_TITLE = "Complete The Sequence";
 
 // The landing screen: gives the experience a "game" feel before the consent form.
 function StartScreen({ onBegin }) {
