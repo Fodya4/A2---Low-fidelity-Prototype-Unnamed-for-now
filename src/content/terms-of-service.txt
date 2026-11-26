@@ -1,0 +1,88 @@
+Terms of Service and Privacy Policy
+Last Updated: November 25, 2026
+Welcome to Persona AI. These Terms of Service and Privacy Policy (collectively, the “Agreement”) govern your access to and use of our artificial intelligence-powered products, interactive experiences, applications, interfaces, and associated services (collectively, the “Services”) provided by Persona AI, its affiliates, subsidiaries, and authorized service partners.
+Please read this Agreement carefully before accessing or using our Services.
+1. Acceptance of Terms
+By accessing, interacting with, or otherwise utilizing any component of the Services, you acknowledge that you have read, understood, and agreed to be bound by this Agreement and any additional policies, guidelines, or supplementary terms incorporated herein by reference.
+Your continued access to or use of the Services following the publication of modifications to this Agreement constitutes your acceptance of such modifications. If you do not agree to these terms, you should discontinue your use of the Services.
+2. Description of Services
+Persona AI provides artificial intelligence-powered experiences designed to facilitate personalized interactions, automated content generation, behavioral analysis, and computational interpretation of user-provided and system-generated information.
+The Services may incorporate machine learning models, automated recognition technologies, adaptive interfaces, predictive systems, and other emerging technologies. The availability, functionality, and performance of individual features may vary depending on technical requirements, system configurations, and operational considerations.
+We reserve the right to introduce, modify, suspend, or discontinue any component of the Services at our discretion.
+3. Eligibility and User Responsibilities
+By using the Services, you represent that you possess the legal capacity to enter into this Agreement and that your participation complies with applicable local, national, and international laws and regulations.
+You agree to provide accurate information where required and to refrain from engaging in activities that may interfere with the operation, integrity, security, or availability of the Services.
+Users are responsible for reviewing all applicable policies and understanding the implications associated with their participation.
+4. Information Collection
+In connection with the provision and continued development of our Services, Persona AI may collect, receive, generate, and otherwise process various categories of information.
+4.1 Information Provided by Users
+We may collect information voluntarily submitted by users through interactive features, uploaded materials, user-generated content, feedback, communications, and other forms of direct engagement with the Services.
+4.2 Automatically Collected Information
+Certain information may be collected automatically during your interaction with the Services. Such information may include, without limitation, device characteristics, session duration, interaction frequency, usage patterns, technical identifiers, visual inputs, physical movements, facial characteristics, spatial positioning, behavioral responses, and environmental information.
+The nature and extent of automatically collected information may vary according to the specific functionalities accessed and the technical requirements of the Services.
+4.3 Derived and Inferred Information
+Our systems may generate supplementary information through computational analysis, classification, aggregation, or interpretation of collected information. This may include inferred preferences, behavioral tendencies, demographic estimates, interaction profiles, predictive indicators, and other algorithmically generated attributes.
+Such information may be generated independently of information explicitly submitted by the user.
+5. Purposes of Information Processing
+Information collected or generated through the Services may be processed for purposes including, but not limited to, facilitating service functionality, improving system performance, maintaining operational security, developing new features, conducting research, evaluating user engagement, and enhancing the accuracy and effectiveness of artificial intelligence systems.
+We may additionally utilize collected information to support statistical analysis, audience segmentation, predictive modeling, commercial development, strategic partnerships, and the optimization of existing or future products and services.
+Information originally collected for one operational purpose may subsequently be processed for other compatible purposes in accordance with our internal policies and applicable regulatory requirements.
+6. Artificial Intelligence and Automated Processing
+The Services utilize automated computational processes to analyze, interpret, transform, and generate information. These processes may involve machine learning models, neural networks, pattern recognition systems, and other algorithmic technologies.
+Information associated with your use of the Services may be incorporated into datasets used for model development, system evaluation, performance benchmarking, and the refinement of existing or future artificial intelligence technologies.
+Automated processes may produce classifications, associations, predictions, or representations that do not necessarily correspond to the user's actual characteristics, intentions, preferences, or identity.
+Persona AI does not guarantee the accuracy, completeness, or reliability of any automatically generated interpretation or output.
+7. Information Aggregation and Data Enrichment
+We may combine information collected through the Services with information obtained from affiliated systems, authorized third-party providers, publicly accessible sources, previously collected datasets, and other permissible information resources.
+Such aggregation may facilitate the development of comprehensive analytical profiles, statistical representations, and enhanced datasets intended to support operational, research, developmental, and commercial objectives.
+Information generated through these processes may constitute a distinct informational asset and may be maintained separately from the original information from which it was derived.
+8. Disclosure and Third-Party Services
+Persona AI may engage affiliated entities, contractors, technology providers, research institutions, commercial partners, analytical service providers, and other authorized third parties to support the operation and development of the Services.
+In connection with these activities, collected, processed, aggregated, or derived information may be disclosed, transferred, licensed, or otherwise made available to such entities for purposes consistent with this Agreement.
+Third-party recipients may process information in accordance with their respective operational requirements, contractual arrangements, and applicable privacy policies.
+Persona AI may also transfer relevant information in connection with organizational restructuring, mergers, acquisitions, asset transfers, financing arrangements, or other commercial transactions.
+9. User Content and Intellectual Property
+Users retain such rights in their original submitted content as may be recognized under applicable law.
+By submitting information to, interacting with, or otherwise utilizing the Services, you grant Persona AI and its authorized affiliates a worldwide, non-exclusive, transferable, sublicensable, royalty-free license to access, reproduce, adapt, modify, analyze, distribute, display, process, and otherwise utilize information associated with your participation for purposes related to the Services and associated business activities.
+This license may extend to modified representations, aggregated datasets, analytical outputs, algorithmically generated interpretations, and other derivative materials produced through the operation of the Services.
+Unless otherwise required by applicable law, the termination of your participation shall not automatically invalidate permissions previously granted under this section.
+10. Commercial Applications and Service Development
+Persona AI may utilize information and associated analytical outputs to evaluate market opportunities, improve commercial offerings, develop proprietary technologies, establish business relationships, and support the creation of new informational products.
+Aggregated, transformed, classified, or otherwise processed information may be incorporated into commercial datasets, analytical solutions, licensing arrangements, and products made available to institutional or commercial partners.
+Unless expressly established through a separate written agreement, users shall not be entitled to compensation, royalties, financial consideration, or ownership interests arising from the subsequent utilization of information or derivative materials associated with their participation.
+11. Data Retention and Storage
+Information collected or generated through the Services may be retained for periods determined by operational requirements, technical limitations, research objectives, legal obligations, and legitimate organizational interests.
+Retention periods may differ according to the nature, classification, and intended application of the relevant information.
+Certain information may remain within backup systems, archival records, aggregated datasets, trained computational models, and derivative analytical products following the conclusion of a user's participation.
+The discontinuation of access to the Services does not necessarily result in the immediate removal of all previously collected or subsequently generated information.
+12. International Data Transfers
+Information associated with your use of the Services may be processed, stored, or transferred across multiple jurisdictions in which Persona AI, its affiliates, or authorized service providers maintain operational infrastructure.
+Data protection requirements may vary between jurisdictions. By utilizing the Services, you acknowledge that information may be subject to the regulatory frameworks and operational requirements applicable to the locations in which such processing occurs.
+13. Data Security
+Persona AI implements administrative, organizational, and technical measures designed to protect information against unauthorized access, alteration, disclosure, or destruction.
+However, no method of electronic processing, transmission, or storage can be guaranteed to provide absolute security.
+Users acknowledge the inherent limitations associated with digital technologies and automated information processing systems.
+14. User Preferences and Information Management
+Depending on the functionality of the Services and applicable legal requirements, users may be provided with mechanisms to access, review, modify, or request the removal of certain categories of information.
+The availability and scope of these mechanisms may vary according to the nature of the information, its operational classification, technical feasibility, and applicable retention obligations.
+Requests concerning the removal of original information may not necessarily extend to aggregated datasets, anonymized records, previously distributed information, computational models, or derivative materials that have been incorporated into independent operational systems.
+15. Withdrawal and Termination
+Users may discontinue their participation in the Services at any time.
+Withdrawal from the Services shall not affect processing activities undertaken prior to the effective date of withdrawal, nor shall it necessarily affect the continued retention or utilization of information where permitted by applicable law or otherwise established under this Agreement.
+Certain provisions relating to intellectual property, information retention, authorized usage, and limitations of liability may survive the termination of this Agreement.
+16. Limitations of Liability
+To the maximum extent permitted by applicable law, Persona AI and its affiliates shall not be liable for indirect, incidental, consequential, or other damages arising from the use of the Services, including reliance upon automatically generated outputs, interruptions in availability, inaccuracies in computational interpretations, or activities undertaken by authorized third-party service providers.
+The Services are provided on an “as is” and “as available” basis without warranties of any kind, whether express or implied, except where otherwise required by applicable law.
+17. Modifications to This Agreement
+Persona AI reserves the right to revise, supplement, or otherwise modify this Agreement to reflect changes in technology, business operations, service functionality, regulatory requirements, and organizational policies.
+Updated versions may be made available through the Services or other appropriate communication channels. Users are encouraged to periodically review this Agreement to remain informed of relevant changes.
+Continued use of the Services following the effective date of any modifications constitutes acceptance of the revised Agreement.
+18. Severability and General Provisions
+If any provision of this Agreement is determined to be invalid, unlawful, or unenforceable under applicable law, such determination shall not affect the validity or enforceability of the remaining provisions.
+The failure of Persona AI to enforce any provision of this Agreement shall not constitute a waiver of its right to enforce that provision subsequently.
+This Agreement constitutes the general understanding between the user and Persona AI concerning access to and utilization of the Services.
+19. Acknowledgement and Consent
+By selecting “I Agree,” “Accept and Continue,” or any equivalent confirmation mechanism, you acknowledge that you have had the opportunity to review this Agreement and understand the nature of the Services and the associated information processing activities.
+You further acknowledge and authorize the collection, generation, analysis, transformation, retention, disclosure, distribution, and utilization of information associated with your participation, subject to the provisions outlined in this Agreement and applicable law.
+Your acceptance shall remain effective for the duration of your participation and, where applicable, beyond the termination of your access to the Services.
+

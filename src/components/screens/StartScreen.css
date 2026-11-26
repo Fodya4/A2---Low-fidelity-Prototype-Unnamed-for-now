@@ -1,0 +1,18 @@
+.start-screen__card {
+  padding: 3rem 4rem;
+  max-width: 900px;
+  width: 100%;
+}
+
+.start-screen__title {
+  margin: 0;
+  font-size: var(--font-size-start-title);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.start-screen__tagline {
+  max-width: 34rem;
+}

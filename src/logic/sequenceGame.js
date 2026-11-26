@@ -36,19 +36,30 @@ export const initialGameState = {
   round: 0,
   sequence: [],
   progress: 0, // how many movements in this round have been attempted
-  results: [], // one true/false per attempted movement this round
+  results: [], // one true/false per attempted movement this round (for the UI)
+  attempts: [], // full record of each attempt this round (for the profile)
+  moveStartedAt: null, // when the current movement's timer started
   passed: null, // whether the round just finished was fully correct
-  history: [], // one entry per finished round
+  history: [], // one entry per finished round, including its attempts
 };
 
-// Records one attempt (correct or not) and ends the round after the last movement.
-// The round passes only if every movement was correct.
-function recordAttempt(state, correct) {
+// Records one attempt and ends the round after the last movement.
+// actual is the movement the visitor did, or null for a time-out.
+// at is the time of the attempt, supplied by the hook (reducers can't read the clock).
+function recordAttempt(state, { correct, actual, at }) {
+  const attempt = {
+    expected: state.sequence[state.progress],
+    actual,
+    correct,
+    durationMs: at - state.moveStartedAt,
+  };
   const results = [...state.results, correct];
+  const attempts = [...state.attempts, attempt];
   const progress = state.progress + 1;
 
   if (progress < state.sequence.length) {
-    return { ...state, progress, results };
+    // The next movement's timer starts now.
+    return { ...state, progress, results, attempts, moveStartedAt: at };
   }
 
   const passed = results.every(Boolean);
@@ -57,10 +68,11 @@ function recordAttempt(state, correct) {
     phase: "feedback",
     progress,
     results,
+    attempts,
     passed,
     history: [
       ...state.history,
-      { round: state.round, length: state.sequence.length, passed },
+      { round: state.round, length: state.sequence.length, passed, attempts },
     ],
   };
 }
@@ -81,18 +93,33 @@ export function gameReducer(state, action) {
 
     case "BEGIN_PERFORM":
       if (state.phase !== "countdown") return state;
-      return { ...state, phase: "perform", progress: 0, results: [] };
+      return {
+        ...state,
+        phase: "perform",
+        progress: 0,
+        results: [],
+        attempts: [],
+        moveStartedAt: action.at,
+      };
 
     case "MOVEMENT": {
       if (state.phase !== "perform") return state;
       const expected = state.sequence[state.progress];
-      return recordAttempt(state, action.id === expected);
+      return recordAttempt(state, {
+        correct: action.id === expected,
+        actual: action.id,
+        at: action.at,
+      });
     }
 
     case "TIMEOUT":
       // No movement in time: counts as a missed movement, then the round continues.
       if (state.phase !== "perform") return state;
-      return recordAttempt(state, false);
+      return recordAttempt(state, {
+        correct: false,
+        actual: null,
+        at: action.at,
+      });
 
     case "NEXT_ROUND":
       if (state.phase !== "feedback") return state;
@@ -104,6 +131,8 @@ export function gameReducer(state, action) {
         sequence: action.sequence,
         progress: 0,
         results: [],
+        attempts: [],
+        moveStartedAt: null,
         passed: null,
       };
 

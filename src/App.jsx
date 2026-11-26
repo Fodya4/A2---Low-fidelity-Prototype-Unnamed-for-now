@@ -4,6 +4,9 @@ import TermsOfService from "./components/screens/TermsOfService";
 import MovementGame from "./components/screens/MovementGame";
 import AnalyzingScreen from "./components/screens/AnalyzingScreen";
 import Marketplace from "./components/screens/Marketplace";
+import { buildProfile } from "./logic/profile";
+import { priceFor } from "./logic/pricing";
+import { createAuction } from "./logic/auction";
 
 const MAX_PARTICIPANTS = 30;
 
@@ -16,13 +19,16 @@ function App() {
   const [participants, setParticipants] = useState([]);
   const [subjectCount, setSubjectCount] = useState(0);
 
-  function handleGameComplete({ portrait, history }) {
+  function handleGameComplete({ portrait, snapshots, history }) {
     const number = subjectCount + 1;
+    const profile = buildProfile(history);
     const newParticipant = {
       id: crypto.randomUUID(),
       number,
       portrait,
-      history,
+      snapshots,
+      profile,
+      auction: createAuction(priceFor(profile)), // scripted once, played back in the marketplace
     };
     setSubjectCount(number);
     setParticipant(newParticipant);
@@ -40,7 +46,7 @@ function App() {
   }
 
   return (
-    <main style={{ padding: "2rem", fontFamily: "system-ui" }}>
+    <main className="app">
       {stage === "start" && <StartScreen onBegin={() => setStage("consent")} />}
       {stage === "consent" && (
         <TermsOfService onAccept={() => setStage("game")} />

@@ -37,7 +37,7 @@ export function useSequenceGame() {
     if (phase !== "countdown") return;
     const duration = TIMING.countdownFrom * 1000 + TIMING.goMs;
     const timeoutId = setTimeout(
-      () => dispatch({ type: "BEGIN_PERFORM" }),
+      () => dispatch({ type: "BEGIN_PERFORM", at: performance.now() }),
       duration
     );
     return () => clearTimeout(timeoutId);
@@ -48,7 +48,7 @@ export function useSequenceGame() {
   useEffect(() => {
     if (phase !== "perform") return;
     const timeoutId = setTimeout(
-      () => dispatch({ type: "TIMEOUT" }),
+      () => dispatch({ type: "TIMEOUT", at: performance.now() }),
       TIMING.moveTimeoutMs
     );
     return () => clearTimeout(timeoutId);
@@ -70,7 +70,8 @@ export function useSequenceGame() {
     state,
     start: () =>
       dispatch({ type: "START", sequence: createSequence(START_LENGTH) }),
-    reportMovement: (id) => dispatch({ type: "MOVEMENT", id }),
+    reportMovement: (id) =>
+      dispatch({ type: "MOVEMENT", id, at: performance.now() }),
     reset: () => dispatch({ type: "RESET" }),
   };
 }

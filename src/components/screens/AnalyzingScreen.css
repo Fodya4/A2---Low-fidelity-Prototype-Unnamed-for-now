@@ -1,0 +1,7 @@
+.analyzing {
+  gap: 3rem;
+}
+
+.analyzing__title {
+  max-width: 900px;
+}

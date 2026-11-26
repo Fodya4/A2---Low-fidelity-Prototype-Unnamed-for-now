@@ -1,0 +1,40 @@
+.consent {
+  gap: 1.5rem;
+}
+
+.consent__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* The scrollable terms box: fixed height, so the text feels endless. */
+.consent__terms {
+  width: 100%;
+  max-width: 1180px;
+  height: min(50vh, 520px);
+  overflow-y: auto;
+  padding: 1.5rem 2.5rem;
+  text-align: left;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-muted) transparent;
+}
+
+.consent__terms-title {
+  margin: 0 0 1.25rem;
+  font-size: var(--font-size-h4);
+  font-weight: 600;
+}
+
+/* Deliberately tiny, dense text: the friction is the point. */
+.consent__terms-heading {
+  margin: 1rem 0 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.consent__terms-paragraph {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}

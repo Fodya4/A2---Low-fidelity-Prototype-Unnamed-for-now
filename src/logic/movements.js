@@ -69,12 +69,12 @@ function armOut(body, side) {
   return level && out;
 }
 
-// --- The five movements. The game will use these ids and labels. ---
+// --- The five movements. Labels match the wording on the group's diagrams. ---
 
 export const MOVEMENTS = [
   {
     id: "raiseRightHand",
-    label: "Raise your right hand",
+    label: "Raise your right arm",
     check: (b) =>
       handRaised(b, "right") &&
       !handOnHead(b, "right") &&
@@ -82,7 +82,7 @@ export const MOVEMENTS = [
   },
   {
     id: "raiseLeftHand",
-    label: "Raise your left hand",
+    label: "Raise your left arm",
     check: (b) =>
       handRaised(b, "left") &&
       !handOnHead(b, "left") &&
@@ -90,7 +90,7 @@ export const MOVEMENTS = [
   },
   {
     id: "bothHandsUp",
-    label: "Raise both hands",
+    label: "Raise both arms up",
     check: (b) =>
       handRaised(b, "right") &&
       handRaised(b, "left") &&
@@ -99,12 +99,12 @@ export const MOVEMENTS = [
   },
   {
     id: "tPose",
-    label: "Arms out to the sides",
+    label: "Extend your arms to the side",
     check: (b) => armOut(b, "right") && armOut(b, "left"),
   },
   {
     id: "handsOnHead",
-    label: "Put both hands on your head",
+    label: "Place your hands on your head",
     check: (b) => handOnHead(b, "right") && handOnHead(b, "left"),
   },
 ];

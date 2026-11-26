@@ -5,66 +5,102 @@ import { useMovementDetector } from "../../hooks/useMovementDetector";
 import { useSequenceGame, TIMING } from "../../hooks/useSequenceGame";
 import { useFaceInFrame } from "../../hooks/useFaceInFrame";
 import PoseOverlay from "../camera/PoseOverlay";
-import ProgressBar from "../shared/ProgressBar";
 import { MOVEMENTS } from "../../logic/movements";
-import { TOTAL_ROUNDS, gameProgress } from "../../logic/sequenceGame";
+import { TOTAL_ROUNDS } from "../../logic/sequenceGame";
 import { capturePortrait } from "../../lib/capturePortrait";
+// Diagrams are imported (not referenced by path) so Vite adds the right base path for GitHub Pages.
+import rightArmUp from "../../assets/movements/right-arm-up.png";
+import leftArmUp from "../../assets/movements/left-arm-up.png";
+import bothArmsUp from "../../assets/movements/both-arms-up.png";
+import armsToTheSide from "../../assets/movements/arms-to-the-side.png";
+import handsOnHead from "../../assets/movements/hands-on-head.png";
+import "./MovementGame.css";
 
 const LABELS = Object.fromEntries(
   MOVEMENTS.map((movement) => [movement.id, movement.label])
 );
+
+// Which diagram goes with which movement id.
+const DIAGRAMS = {
+  raiseRightHand: rightArmUp,
+  raiseLeftHand: leftArmUp,
+  bothHandsUp: bothArmsUp,
+  tPose: armsToTheSide,
+  handsOnHead: handsOnHead,
+};
+
+const TITLES = {
+  instructions: "Instructions",
+  memorise: "Please Remember the Following Sequence:",
+  perform: "Now do the Movement Sequence:",
+};
+
+const MOVE_SECONDS = Math.round(TIMING.moveTimeoutMs / 1000); // per-movement countdown
 const FINISH_DELAY_MS = 2500; // pause on "processing" before handing off to the next screen
+const SNAPSHOT_MAX_WIDTH = 360; // in-game snapshots are smaller than the thumbnail
 
-// The instructions screen (the game's idle phase). Start stays disabled
-// until the camera and model are ready AND a face is clearly in frame.
-function Instructions({ ready, faceReady, onStart }) {
-  let buttonLabel = "Start";
-  if (!ready) buttonLabel = "Waiting for camera and model…";
-  else if (!faceReady) buttonLabel = "Position your face in the frame to begin";
+// Which screen layout each game phase uses.
+function layoutFor(phase) {
+  if (phase === "idle") return "instructions"; // Screen 3
+  if (phase === "show") return "memorise"; // Screen 4
+  return "perform"; // Screen 5 (countdown, perform, feedback, finished)
+}
 
+// Screen 3 text, from the group's Figma (steps 3 and 4 reworded: no reset needed).
+function InstructionsPanel() {
   return (
-    <div style={{ maxWidth: 420 }}>
-      {/* PLACEHOLDER copy: the group can rewrite this. */}
-      <h2>How it works</h2>
-      <ol style={{ lineHeight: 1.7, paddingLeft: "1.25rem" }}>
-        <li>Stand so your head, shoulders and arms are visible on screen.</li>
+    <div className="panel game__instructions">
+      <p>
+        Welcome to Complete the Sequence, an interactive movement-based game
+        where your movements generate a personalized image.
+      </p>
+      <ol>
         <li>
-          Each round, a sequence of movements appears. Memorise it before it
-          disappears.
+          Stand in front of the camera and make sure your upper body is fully
+          visible.
+        </li>
+        <li>Follow the movement instructions displayed on the screen.</li>
+        <li>
+          Hold each position for a moment to give the system time to register
+          your movement.
         </li>
         <li>
-          After the countdown, perform the movements in order, from memory.
+          Once your movement is recognized, move straight on to the next one.
         </li>
         <li>
-          Hold each movement for a moment until it registers, then go to the
-          next one.
-        </li>
-        <li>
-          There are {TOTAL_ROUNDS} rounds. Get every movement in a round right,
-          and the next round adds one more.
+          Complete all the movement challenges to generate and reveal your
+          personalized image.
         </li>
       </ol>
-
-      <p style={{ marginBottom: "0.25rem" }}>
-        <strong>The movements:</strong>
-      </p>
-      <ul style={{ lineHeight: 1.7, paddingLeft: "1.25rem", marginTop: 0 }}>
-        {MOVEMENTS.map((movement) => (
-          <li key={movement.id}>{movement.label}</li>
-        ))}
-      </ul>
-
-      <button type="button" onClick={onStart} disabled={!ready || !faceReady}>
-        {buttonLabel}
-      </button>
+      <p>Pay close attention to the instructions and complete the sequence!</p>
     </div>
   );
 }
 
-// Counts down from TIMING.countdownFrom to "Go!", one number per second.
-// Only mounted during the countdown phase, so it starts fresh every round.
-function Countdown() {
-  const [count, setCount] = useState(TIMING.countdownFrom);
+// Screen 4: the round's movements as numbered diagram cards.
+function MemorisePanel({ sequence }) {
+  return (
+    <div className="panel game__memorise">
+      <ol className="game__diagrams">
+        {sequence.map((id, index) => (
+          <li key={index} className="game__diagram">
+            <span className="game__diagram-number">{index + 1}</span>
+            <img
+              src={DIAGRAMS[id]}
+              alt={LABELS[id]}
+              className="game__diagram-image"
+            />
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// Counts down whole seconds from `from`, then shows endLabel.
+// Given a new `key` each time it should restart, so it always starts fresh.
+function SecondsCountdown({ from, endLabel }) {
+  const [count, setCount] = useState(from);
 
   useEffect(() => {
     if (count <= 0) return;
@@ -72,93 +108,71 @@ function Countdown() {
     return () => clearTimeout(timeoutId);
   }, [count]);
 
-  return (
-    <p style={{ fontSize: "4rem", fontWeight: 700, margin: "0.5rem 0" }}>
-      {count > 0 ? count : "Go!"}
-    </p>
-  );
+  return count > 0 ? count : endLabel;
 }
 
-// One row per movement. Attempted movements show ✅ or ❌ and stay marked;
-// movements not yet attempted stay hidden (the memory part).
-function SequenceSlots({ sequence, results, phase }) {
-  return (
-    <ol style={{ fontSize: "1.25rem", lineHeight: 2 }}>
-      {sequence.map((id, index) => {
-        const attempted = index < results.length;
-        let icon = "⬜";
-        if (attempted) icon = results[index] ? "✅" : "❌";
+// Screen 5's right-hand side: what to do, the big number, and the latest result.
+function PerformPanel({ state, inFrame }) {
+  const { phase, round, progress, sequence, results, passed } = state;
 
-        const revealed = phase === "show" || phase === "feedback" || attempted;
-        return (
-          <li key={index}>
-            {phase === "show" ? "" : `${icon} `}
-            {revealed ? LABELS[id] : "???"}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
+  let label = "";
+  let big = null;
+  let status = "";
 
-function GamePanel({ state, detector, ready, faceReady, onStart }) {
-  const { phase, round, sequence, results, passed } = state;
-
-  if (phase === "idle") {
-    return (
-      <Instructions ready={ready} faceReady={faceReady} onStart={onStart} />
+  if (phase === "countdown") {
+    label = "Get ready";
+    big = (
+      <SecondsCountdown
+        key={`countdown-${round}`}
+        from={TIMING.countdownFrom}
+        endLabel="Go!"
+      />
     );
   }
 
-  const progressBar = (
-    <ProgressBar value={gameProgress(state)} label="Building your result" />
-  );
-
-  if (phase === "finished") {
-    return (
-      <div>
-        {progressBar}
-        <h2>Processing your results…</h2>
-      </div>
-    );
-  }
-
-  let message = "";
-  if (phase === "show")
-    message = "Memorise these movements. You'll repeat them in order.";
-  if (phase === "countdown") message = "Get ready…";
   if (phase === "perform") {
+    const current = results.length + 1;
     const lastResult = results.at(-1); // undefined before the first attempt
-    const nextNumber = results.length + 1;
-    if (!detector.inFrame) {
-      message = "Step into frame";
-    } else if (lastResult === undefined) {
-      message = "Do movement 1";
-    } else {
-      // Immediate feedback on the last movement, plus which movement comes next.
-      message = `${
+    label = `Do Movement ${current}`;
+    // New key per movement, so the 8-second countdown restarts after every attempt.
+    big = (
+      <SecondsCountdown
+        key={`move-${round}-${progress}`}
+        from={MOVE_SECONDS}
+        endLabel="0"
+      />
+    );
+    if (!inFrame) status = "Step into frame";
+    else if (lastResult !== undefined) {
+      status = `Movement ${current - 1}: ${
         lastResult ? "Correct" : "Incorrect"
-      }. Now do movement ${nextNumber}`;
+      }`;
     }
   }
+
   if (phase === "feedback") {
     const correctCount = results.filter(Boolean).length;
-    message = passed
-      ? "Well done, correct sequence"
-      : `Incorrect sequence: ${correctCount} of ${sequence.length} correct`;
+    label = `Round ${round} complete`;
+    big = `${correctCount}/${sequence.length}`;
+    status = passed ? "Well done, correct sequence" : "Incorrect sequence";
+  }
+
+  if (phase === "finished") {
+    label = "Sequence complete";
+    status = "Processing your results…";
   }
 
   return (
-    <div>
-      {progressBar}
-      <h2>
+    <div className="game__perform">
+      <p className="game__round">
         Round {round} of {TOTAL_ROUNDS}
-      </h2>
-      <p style={{ fontSize: "1.5rem" }}>
-        <strong>{message}</strong>
       </p>
-      {phase === "countdown" && <Countdown />}
-      <SequenceSlots sequence={sequence} results={results} phase={phase} />
+      <p className="game__perform-label">{label}</p>
+      <p className="game__big-number countdown-number">{big}</p>
+      {/* aria-live: screen readers announce results as they appear */}
+      <p className="game__status" aria-live="polite">
+        {status}
+      </p>
     </div>
   );
 }
@@ -172,31 +186,62 @@ function MovementGame({ onComplete }) {
     error: poseError,
   } = useBodyPose(videoRef, { enabled: cameraStatus === "ready" });
   const game = useSequenceGame();
-  const detector = useMovementDetector(posesRef, {
-    enabled: game.state.phase === "perform",
-    onMovement: game.reportMovement,
-  });
+  const { phase, round, sequence, results } = game.state;
 
   const ready = poseStatus === "detecting";
   // Face check only runs on the instructions screen, before the game starts.
   const faceReady = useFaceInFrame(posesRef, {
-    enabled: ready && game.state.phase === "idle",
+    enabled: ready && phase === "idle",
   });
 
-  // Holds the portrait until the game ends. A ref, because the screen never displays it.
-  const portraitRef = useRef(null);
+  // Photos are held in refs: the game screen never displays them.
+  const portraitRef = useRef(null); // the thumbnail, taken at Start
+  const snapshotsRef = useRef([]); // one sneaky photo per round
+  const capturePlanRef = useRef(null); // which movement triggers this round's photo
+
+  // At the start of each perform phase, secretly pick one movement to photograph.
+  useEffect(() => {
+    if (phase !== "perform") return;
+    capturePlanRef.current = {
+      round,
+      index: Math.floor(Math.random() * sequence.length),
+    };
+  }, [phase, round, sequence.length]);
+
+  // Called by the detector for every confirmed movement.
+  function handleMovement(id) {
+    const plan = capturePlanRef.current;
+    // results.length is the number of the attempt happening right now (0-based).
+    if (plan && plan.round === round && plan.index === results.length) {
+      const src = capturePortrait(videoRef.current, {
+        maxWidth: SNAPSHOT_MAX_WIDTH,
+      });
+      if (src) snapshotsRef.current.push({ src, round, movement: LABELS[id] });
+    }
+    game.reportMovement(id);
+  }
+
+  const detector = useMovementDetector(posesRef, {
+    enabled: phase === "perform",
+    onMovement: handleMovement,
+  });
 
   function handleStart() {
     if (!faceReady) return; // safety: never capture without a face in frame
     portraitRef.current = capturePortrait(videoRef.current);
+    snapshotsRef.current = [];
     game.start();
   }
 
-  // When the game finishes, wait briefly, then hand the portrait and results to App.
+  // When the game finishes, wait briefly, then hand everything to App.
   const finish = useEffectEvent(() => {
-    onComplete({ portrait: portraitRef.current, history: game.state.history });
+    onComplete({
+      portrait: portraitRef.current,
+      snapshots: snapshotsRef.current,
+      history: game.state.history,
+    });
   });
-  const finished = game.state.phase === "finished";
+  const finished = phase === "finished";
 
   useEffect(() => {
     if (!finished) return;
@@ -204,46 +249,59 @@ function MovementGame({ onComplete }) {
     return () => clearTimeout(timeoutId);
   }, [finished]);
 
-  return (
-    <section>
-      {cameraError && <p style={{ color: "crimson" }}>{cameraError}</p>}
-      {poseError && <p style={{ color: "crimson" }}>{poseError}</p>}
+  const layout = layoutFor(phase);
 
-      <div
-        style={{
-          display: "flex",
-          gap: "2rem",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ position: "relative", width: 640, maxWidth: "100%" }}>
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{
-              display: "block",
-              width: "100%",
-              height: "auto",
-              transform: "scaleX(-1)",
-              background: "#111",
-            }}
-          />
-          <PoseOverlay
-            videoRef={videoRef}
-            posesRef={posesRef}
-            connections={connections}
-          />
+  let cameraLabel = "Player Ready";
+  if (!ready) cameraLabel = "Loading camera…";
+  else if (!faceReady) cameraLabel = "Waiting for player…";
+
+  return (
+    <section className={`screen game game--${layout}`}>
+      <h1 className="screen-title">{TITLES[layout]}</h1>
+
+      {cameraError && <p className="game__error">{cameraError}</p>}
+      {poseError && <p className="game__error">{poseError}</p>}
+
+      <div className="game__body">
+        <div className="game__side">
+          {layout === "instructions" && <InstructionsPanel />}
+          {layout === "memorise" && <MemorisePanel sequence={sequence} />}
+          {layout === "perform" && (
+            <PerformPanel state={game.state} inFrame={detector.inFrame} />
+          )}
         </div>
 
-        <GamePanel
-          state={game.state}
-          detector={detector}
-          ready={ready}
-          faceReady={faceReady}
-          onStart={handleStart}
-        />
+        {/* The camera stays mounted in this exact spot for the whole game;
+            only CSS moves or hides it, so the webcam never restarts. */}
+        <div
+          className="game__camera-column"
+          aria-hidden={layout === "memorise"}
+        >
+          <div className="panel game__camera-panel">
+            {layout === "instructions" && (
+              <p className="game__camera-label">{cameraLabel}</p>
+            )}
+            <div className="game__camera">
+              <video ref={videoRef} className="game__video" playsInline muted />
+              <PoseOverlay
+                videoRef={videoRef}
+                posesRef={posesRef}
+                connections={connections}
+              />
+            </div>
+          </div>
+
+          {layout === "instructions" && (
+            <button
+              type="button"
+              className="button game__start"
+              onClick={handleStart}
+              disabled={!ready || !faceReady}
+            >
+              Start
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );

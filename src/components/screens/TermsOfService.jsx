@@ -1,65 +1,53 @@
-import { useState } from "react";
+// Vite's "?raw" suffix imports a file's contents as a plain string.
+import termsText from "../../content/terms-of-service.txt?raw";
+import "./TermsOfService.css";
 
-// Visitors must tick the box to continue. There is no way to decline.
+// Lines like "1. Acceptance of Terms" or "4.1 Information Provided by Users" are headings.
+const SECTION_HEADING = /^\d+(\.\d+)?\.?\s/;
+
+// Split the text into lines once, when the file loads (not on every render).
+// trim() also removes Windows line endings if the file was saved on a PC.
+const [termsTitle, ...termsLines] = termsText
+  .split("\n")
+  .map((line) => line.trim())
+  .filter(Boolean);
+
+// Screen 2: the consent form. There is no way to decline.
 function TermsOfService({ onAccept }) {
-  const [agreed, setAgreed] = useState(false);
-
   return (
-    <section style={{ maxWidth: 640 }}>
-      <h1>Terms of Service</h1>
-
-      <div
-        style={{
-          height: 260,
-          overflowY: "auto",
-          border: "1px solid #555",
-          padding: "1rem",
-          fontSize: "0.85rem",
-          lineHeight: 1.6,
-        }}
-      >
-        {/* PLACEHOLDER: the group writes the real terms text. */}
-        <p>
-          By continuing, you agree to participate in this interactive
-          experience.
-        </p>
-        <p>
-          The system will use your device camera to track body movement during
-          the experience. Data may be processed to improve your experience and
-          the experience of others.
-        </p>
-        <p>
-          Section 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        </p>
-        <p>
-          Section 2. Sed do eiusmod tempor incididunt ut labore et dolore magna
-          aliqua.
-        </p>
-        <p>
-          Section 3. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-          laboris.
-        </p>
-        <p>
-          Section 4. Duis aute irure dolor in reprehenderit in voluptate velit
-          esse.
-        </p>
-        <p>
-          Section 5. Excepteur sint occaecat cupidatat non proident, sunt in
-          culpa.
+    <section className="screen consent">
+      <div className="consent__header">
+        <h1 className="screen-title">Consent Form</h1>
+        <p className="screen-subtitle">
+          To generate your artwork, we require your consent.
         </p>
       </div>
 
-      <label style={{ display: "flex", gap: "0.5rem", margin: "1rem 0" }}>
-        <input
-          type="checkbox"
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-        />
-        I have read and agree to the Terms of Service
-      </label>
+      {/* tabIndex lets keyboard users focus the box and scroll it with arrow keys. */}
+      <div
+        className="panel consent__terms"
+        tabIndex={0}
+        role="region"
+        aria-label="Terms of Service and Privacy Policy"
+      >
+        <h2 className="consent__terms-title">{termsTitle}</h2>
+        {termsLines.map((line, index) => {
+          const isHeading =
+            SECTION_HEADING.test(line) || line.startsWith("Last Updated");
+          return isHeading ? (
+            <h3 key={index} className="consent__terms-heading">
+              {line}
+            </h3>
+          ) : (
+            <p key={index} className="consent__terms-paragraph">
+              {line}
+            </p>
+          );
+        })}
+      </div>
 
-      <button type="button" onClick={onAccept} disabled={!agreed}>
-        Continue
+      <button type="button" className="button" onClick={onAccept}>
+        I Agree
       </button>
     </section>
   );

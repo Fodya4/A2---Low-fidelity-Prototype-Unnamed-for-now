@@ -1,111 +1,129 @@
+/* ===== Theme tokens: the design system lives here ===== */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Colours */
+  --color-bg: #171717;
+  --color-panel: #262626;
+  --color-text: #f7f7f5;
+  --color-text-muted: #929191;
+  --color-button: #d9d9d9;
+  --color-button-hover: #f7f7f5;
+  --color-button-text: #171717;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Fonts */
+  --font: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace; /* countdown numbers */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Font sizes, from the design system (Figma "pts" = px).
+       The large sizes scale down on narrower screens but never exceed the design value.
+       The middle vw value is the design size relative to a 1440px-wide frame. */
+  --font-size-start-title: clamp(3rem, 6.67vw, 6rem); /* 96px */
+  --font-size-title: clamp(2.5rem, 4.44vw, 4rem); /* 64px */
+  --font-size-h1: clamp(1.75rem, 2.78vw, 2.5rem); /* 40px */
+  --font-size-h2: clamp(1.625rem, 2.5vw, 2.25rem); /* 36px */
+  --font-size-h3: clamp(1.375rem, 1.94vw, 1.75rem); /* 28px */
+  --font-size-h4: 1.5rem; /* 24px */
+  --font-size-body: 1.125rem; /* 18px */
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Shapes */
+  --radius-panel: 16px;
+  --radius-button: 10px;
+
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* ===== Base ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* ===== Shared layout ===== */
+
+/* A full-viewport screen with its content centred. */
+.screen {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 3rem 2rem;
+  text-align: center;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+.screen-title {
   margin: 0;
+  font-size: var(--font-size-title);
+  font-weight: 500;
+  line-height: 1.2;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.screen-subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-h3);
+  line-height: 1.4;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.panel {
+  background: var(--color-panel);
+  border-radius: var(--radius-panel);
+}
+
+/* ===== Buttons ===== */
+.button {
+  font: inherit;
+  font-size: var(--font-size-h4);
+  padding: 0.6rem 2.5rem;
+  border: none;
+  border-radius: var(--radius-button);
+  background: var(--color-button);
+  color: var(--color-button-text);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--color-button-hover);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Visible focus ring for keyboard users. */
+.button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+/* ===== Countdown numbers ===== */
+/* Monospaced, so digits don't shift sideways as they change. */
+.countdown-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }

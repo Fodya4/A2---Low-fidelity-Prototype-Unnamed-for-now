@@ -1,0 +1,189 @@
+.game__body {
+  display: grid;
+  gap: 3rem;
+  width: 100%;
+  max-width: 1280px;
+  align-items: start;
+}
+
+.game__side {
+  grid-area: side;
+  text-align: left;
+}
+
+.game__camera-column {
+  grid-area: camera;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.game__camera-panel {
+  width: 100%;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* position: relative so the skeleton canvas can sit exactly on top of the video. */
+.game__camera {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+
+.game__video {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scaleX(-1); /* mirror, so it feels like a mirror */
+}
+
+.game__error {
+  margin: 0;
+  color: #ff6b6b;
+}
+
+/* ===== Screen 3: instructions on the left, camera + Start on the right ===== */
+.game--instructions .game__body {
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  grid-template-areas: "side camera";
+}
+
+.game__camera-label {
+  margin: 0;
+  font-size: var(--font-size-h3);
+  text-align: center;
+}
+
+.game__instructions {
+  padding: 2rem 2.5rem;
+  font-size: var(--font-size-h4);
+  line-height: 1.45;
+}
+
+.game__instructions p {
+  margin: 0;
+}
+
+.game__instructions ol {
+  margin: 1.25rem 0;
+  padding-left: 1.75rem;
+}
+
+.game__start {
+  width: 100%;
+  max-width: 330px;
+}
+
+/* ===== Screen 4: diagrams full width, camera hidden ===== */
+.game--memorise .game__body {
+  grid-template-columns: 1fr;
+  grid-template-areas: "side";
+  max-width: 1200px;
+}
+
+.game--memorise .game__side {
+  text-align: center;
+}
+
+/* Visually hidden but still playing, so detection and the webcam keep running.
+     (display: none can pause video in some browsers, so we avoid it.) */
+.game--memorise .game__camera-column {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.game__memorise {
+  padding: 3rem 2.5rem;
+}
+
+.game__diagrams {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.game__diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: clamp(150px, 16vw, 260px);
+}
+
+.game__diagram-number {
+  font-size: var(--font-size-h2);
+}
+
+.game__diagram-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+/* ===== Screen 5: camera on the left, instructions + countdown on the right ===== */
+.game--perform .game__body {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-areas: "camera side";
+  align-items: center;
+}
+
+.game--perform .game__side {
+  text-align: center;
+}
+
+.game__perform {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.game__round {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+}
+
+.game__perform-label {
+  margin: 0;
+  font-size: var(--font-size-h2);
+}
+
+/* min-height keeps the layout steady when the number is blank. */
+.game__big-number {
+  margin: 0;
+  font-size: var(--font-size-start-title);
+  font-weight: 500;
+  line-height: 1;
+  min-height: 1em;
+}
+
+.game__status {
+  margin: 0;
+  font-size: var(--font-size-h3);
+  min-height: 1.5em;
+}
+
+/* ===== Narrow screens: stack in one column ===== */
+@media (max-width: 900px) {
+  .game--instructions .game__body,
+  .game--perform .game__body {
+    grid-template-columns: 1fr;
+    grid-template-areas: "camera" "side";
+  }
+}
